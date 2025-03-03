@@ -1,4 +1,4 @@
-package ErrorMsg;
+package ErrorMsg
 
 public class ErrorMsg {
   private LineList linePos = new LineList(-1,null);

@@ -2,11 +2,11 @@ package Parse;
 
 public class Parse {
 
-  public ErrorMsg.ErrorMsg errorMsg;
+  public ErrorMsg errorMsg;
   public Absyn.Exp absyn;
 
   public Parse(String filename) {
-      errorMsg = new ErrorMsg.ErrorMsg(filename);
+      errorMsg = new ErrorMsg(filename);
       java.io.InputStream inp;
       try {
 	inp=new java.io.FileInputStream(filename);

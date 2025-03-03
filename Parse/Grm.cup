@@ -46,7 +46,7 @@ terminal INT, COMMA, COLON, SEMICOLON, LPAREN, RPAREN, LBRACK, RBRACK,
 
 non terminal Absyn.Exp          Exp;
 non terminal Absyn.Var          Var;
-
+non terminal Absyn.VarDec       VarDec;
 start with Exp;
 
 Exp ::= error:e
@@ -58,3 +58,7 @@ Exp ::= error:e
 Var ::=   ID:n
 	  {: RESULT = new Absyn.SimpleVar(nleft, sym(n)); :}
 	;
+
+TYPE ::= INT {: RESULT = new Absyn.}
+VarDec ::= 
+ForLoop ::= FOR LPAREN Var  SEMICOLON Exp:e2 SEMICOLON Exp: e3 RPAREN 

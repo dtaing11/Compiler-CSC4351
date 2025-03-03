@@ -92,13 +92,13 @@ public class Grm extends java_cup.runtime.lr_parser {
    report_error("Syntax error (" + current.sym + ")", current);
   }
 
-  ErrorMsg.ErrorMsg errorMsg;
+  ErrorMsg errorMsg;
 
   public void report_error(String message, java_cup.runtime.Symbol info) {
       errorMsg.error(info.left, message);
   }
 
-  public Grm(Lexer l, ErrorMsg.ErrorMsg err) {
+  public Grm(Lexer l, ErrorMsg err) {
     this();
     errorMsg=err;
     lexer=l;
