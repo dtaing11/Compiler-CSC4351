@@ -1,0 +1,13 @@
+{
+    "java.project.sourcePaths": [
+        "Absyn",
+        "ErrorMsg",
+        "lib/classes/java_cup",
+        "Parse",
+        "Symbol"
+    ],
+    "java.project.referencedLibraries": [
+        "Lib/chap2.jar",
+        "Lib/tools.jar"
+    ]
+}

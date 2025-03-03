@@ -1,4 +1,2 @@
 package Absyn;
-import Symbol.Symbol;
-abstract public class Exp extends Absyn {
-}
+abstract public class Exp extends Absyn {}
