@@ -45,20 +45,180 @@ terminal INT, COMMA, COLON, SEMICOLON, LPAREN, RPAREN, LBRACK, RBRACK,
     MODULUS;
 
 non terminal Absyn.Exp          Exp;
-non terminal Absyn.Var          Var;
-non terminal Absyn.VarDec       VarDec;
+non terminal Absyn.VarDec       VarDec;  
+non terminal Absyn.Ty           Type; 
+non terminal Absyn.StorageClass StorageClass;
+
+//Smt Non terminal
+non terminal Absyn.Stmt         Stmt;
+non terminal Absyn.ForStmt      ForStmt; 
+non terminal Absyn.IfStmt       IfStmt;
+non terminal Absyn.WhileStmt    WhileStmt;
+non terminal Absyn.BlockStmt    BlockStmt;
+non terminal Absyn.ReturnStmt   RetrunStmt;
+non terminal Absyn.ExpStmt      ExpStmt; 
+non terminal Absyn.BreakStmt    BreakStmt; 
+non terminal Absyn.ContinueStmt ContinueStmt;
+non terminal Absyn.SwitchStmt   SwitchStmt;
+//Stmt assist 
+
+non terminal List<Absyn.Stmt> StmtList;
+non terminal Absyn.CaseStmt CaseStmt;
+non terminal List<Absyn.CaseStmt> CaseList;
+
+
 start with Exp;
 
 Exp ::= error:e
-	  {: RESULT = new Absyn.SeqExp(eleft, null); :}
-	| Var:v
-	  {: RESULT = new Absyn.VarExp(vleft, v); :}
-	;
+      {: RESULT = new Absyn.SeqExp(eleft, null); :}
+      | VarDec:v
+      {: RESULT = new Absyn.VarExp(vleft, v); :}
+      | Exp:e1 PLUS Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "+", e2); :}
+      | Exp:e1 MINUS Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "-", e2); :}
+      | Exp:e1 TIMES Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "*", e2); :}
+      | Exp:e1 DIVIDE Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "/", e2); :}
+      | Exp:e1 MODULUS Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "%", e2); :}
+      | Exp:e1 EQ Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "==", e2); :}
+      | Exp:e1 NEQ Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "!=", e2); :}
+      | Exp:e1 LT Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "<", e2); :}
+      | Exp:e1 GT Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, ">", e2); :}
+      | Exp:e1 LE Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "<=", e2); :}
+      | Exp:e1 GE Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, ">=", e2); :}
+      | Exp:e1 AND Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "&&", e2); :}
+      | Exp:e1 OR Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "||", e2); :}
+      | Exp:e1 BWISEAND Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "&", e2); :}
+      | Exp:e1 BWISEOR Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "|", e2); :}
+      | Exp:e1 BWISEXOR Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "^", e2); :}
+      | Exp:e1 LSHIFT Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, "<<", e2); :}
+      | Exp:e1 RSHIFT Exp:e2
+      {: RESULT = new Absyn.BinOpExp(e1left, e1, ">>", e2); :}
+      | LPAREN Exp:e RPAREN
+      {: RESULT = e; :}
+      | DECIMAL_LITERAL:d
+      {: RESULT = new Absyn.IntExp(dleft, d); :}
+      | CHAR_LITERAL:c
+      {: RESULT = new Absyn.CharExp(cleft, c); :}
+      | STRING_LITERAL:s
+      {: RESULT = new Absyn.StringExp(sleft, s); :}
+      | Exp:e1 ASSIGN Exp:e2
+      {: RESULT = new Absyn.AssignExp(e1left, e1, "=", e2); :}
+      | Exp:e1 ADDASSIGN Exp:e2
+      {: RESULT = new Absyn.AssignExp(e1left, e1, "+=", e2); :}
+      | Exp:e1 SUBASSIGN Exp:e2
+      {: RESULT = new Absyn.AssignExp(e1left, e1, "-=", e2); :}
+      | Exp:e1 MULASSIGN Exp:e2
+      {: RESULT = new Absyn.AssignExp(e1left, e1, "*=", e2); :}
+      | Exp:e1 DIVASSIGN Exp:e2
+      {: RESULT = new Absyn.AssignExp(e1left, e1, "/=", e2); :}
+      ;
 
-Var ::=   ID:n
-	  {: RESULT = new Absyn.SimpleVar(nleft, sym(n)); :}
-	;
+//All Type 
+Type ::= INT {: RESULT = new Absyn.IntTy(tleft); :}
+      | FLOAT {: RESULT = new Absyn.FloatTy(tleft); :}
+      | DOUBLE {: RESULT = new Absyn.DoubleTy(tleft); :}
+      | CHAR {: RESULT = new Absyn.CharTy(tleft); :}
+      | VOID {: RESULT = new Absyn.VoidTy(tleft); :}
+      | LONG Type:t {: RESULT = new Absyn.LongTy(tleft, t); :}
+      | SHORT Type:t {: RESULT = new Absyn.ShortTy(tleft, t); :}
+      | STRUCT ID:n LBRACE VarDecList:v RBRACE {: RESULT = new Absyn.StructTy(nleft, v); :}
+      ;
 
-TYPE ::= INT {: RESULT = new Absyn.}
-VarDec ::= 
-ForLoop ::= FOR LPAREN Var  SEMICOLON Exp:e2 SEMICOLON Exp: e3 RPAREN 
+
+//to handle Extern or Static
+StorageClass ::= EXTERN {: RESULT = new Absyn.StorageClass(true, false); :}
+              | STATIC {: RESULT = new Absyn.StorageClass(false, true); :}  
+              | {: RESULT = new Absyn.StorageClass(false, false); :}  //no extern or static 
+              ;
+
+
+VarDec ::= StorageClass:s Type:t ID:n SEMICOLON
+         {: RESULT = new Absyn.VarDec(tleft, t, sym(n), null, s.isExtern, s.isStatic); :}
+         | StorageClass:s Type:t ID:n ASSIGN Exp:e SEMICOLON
+         {: RESULT = new Absyn.VarDec(tleft, t, sym(n), e, s.isExtern, s.isStatic); :}
+         ;
+
+Stmt ::= BlockStm
+        | IfStmt 
+        | ForStmt
+        | WhileStmt
+        | ReturnStmt
+        | BreakStmt
+        | ContinueStmt
+        | ExpStmt
+        | SwitchStmt
+        ;
+
+BlockStmt ::= LBRACE StmtList:s RBRACE 
+          {:RESULT = new Absyn.BlockStmt($1left, s):;}
+// if( i < 0){stmt}
+IfStmt ::= IF LPAREN Exp:cond RPAREN  Stmt:s1  
+           {: RESULT = new Absyn.IfStmt($1left, cond,s1, null ); :}
+          |  IF LPAREN Exp:cond RPAREN  Stmt:s1  ELSE  Stmt:s2 
+          {: RESULT = new Absyn.IfStmt($1left, cond,s1, s2 ); :};
+
+//for(int  i = 1; i < 0 ; i++ ){statement}
+ForStmt ::= FOR LPAREN VarDec:v SEMICOLON Exp:cond SEMICOLON Exp:upD RPAREN  Stmt:s 
+          {: RESULT = new Absyn.ForStmt($1left, v, cond,upD,s); :}
+          | FOR LPAREN VarDec:v SEMICOLON Exp:cond SEMICOLON   Stmt:s RBRACE // for (int i = 0; i < 0 ; ){stmt}
+          {: RESULT = new Absyn.ForStmt($1left, v, cond,null,s); :}
+          | FOR LPAREN  SEMICOLON  SEMICOLON RPAREN  Stmt:s   // for (; ; ){stmt}
+           {: RESULT = new Absyn.ForStmt($1left, null, null,null,s); :};
+
+WhileStmt ::= WHILE LPAREN Exp:cond RPAREN Stmt:s 
+          {:RESULT = new Absyn.ForStmt($1left, cond, s); :};
+       
+ReturnStmt ::= RETURN Exp:e SEMICOLON
+            {: RESULT = new Absyn.ReturnStmt($1left, e); :}
+            | RETURN SEMICOLON
+            {: RESULT = new Absyn.ReturnStmt($1left, null); :};
+
+BreakStmt ::= BREAK SEMICOLON
+            {: RESULT = new Absyn.BreakStmt($1left); :};
+
+ContinueStmt ::= CONTINUE SEMICOLON
+            {: RESULT = new Absyn.ContinueStmt($1left); :};
+
+ExpStmt ::= Exp:e SEMICOLON
+          {: RESULT = new Absyn.ExpStmt(eleft, e); :};
+
+
+SwitchStmt ::= SWITCH LPAREN Exp:e RPAREN LBRACE CaseList:c RBRACE
+            {: RESULT = new Absyn.SwitchStmt($1left, e, c); :}
+            ;
+
+
+//stmt assist 
+
+CaseList ::= CaseStmt:c CaseList:cl
+          {: RESULT = $2.add($1); :}
+          | {: RESULT = new ArrayList<>(); :}
+          ;
+
+CaseStmt ::= CASE Exp:e COLON StmtList:s
+          {: RESULT = new Absyn.CaseStmt($1left, e, s); :}
+          | DEFAULT COLON StmtList:s
+          {: RESULT = new Absyn.CaseStmt($1left, null, s); :}
+          ;
+
+StmtList ::= Stmt:s StmtList:sl
+           {: RESULT = $2.add(0, s); :}
+           | {: RESULT = new ArrayList<>(); :}  
+           ;
+
