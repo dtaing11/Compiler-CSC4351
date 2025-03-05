@@ -1,17 +1,30 @@
 package Absyn;
 
-import Absyn.Exp;
+
 
 public class ForStmt extends Stmt {
-    public VarDec init;
-    public Exp condition, update;
+    public VarDec varInit;
+    public Exp expInit;
+    public Exp condition;
+    public Exp update;
     public Stmt body;
-    
-    public ForStmt (int p , VarDec i, Exp cond, Exp upD, Stmt b){
-        pos = p; 
-        init = i;
-        condition = cond; 
-        update = upD;
-        body = b; 
+
+    public ForStmt(int p, VarDec v, Exp cond, Exp upd, Stmt b) {
+        pos = p;
+        varInit = v;
+        expInit = null;
+        condition = cond;
+        update = upd;
+        body = b;
+    }
+
+
+    public ForStmt(int p, Exp e, Exp cond, Exp upd, Stmt b) {
+        pos = p;
+        varInit = null;
+        expInit = e;
+        condition = cond;
+        update = upd;
+        body = b;
     }
 }

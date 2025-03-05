@@ -1,5 +1,7 @@
 
-import Absyn; 
+package Absyn;
+import Symbol.Symbol;
+
 public class VarDec extends Absyn  {
 
     public Ty type; 

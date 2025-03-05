@@ -48,7 +48,9 @@ non terminal Absyn.Exp          Exp;
 non terminal Absyn.VarDec       VarDec;  
 non terminal Absyn.Ty           Type; 
 non terminal Absyn.StorageClass StorageClass;
-
+non terminal Absyn.FunDec FunDec;
+non terminal List<Absyn.VarDec> ParamList;
+non terminal List<Absyn.Exp> ArgList;
 //Smt Non terminal
 non terminal Absyn.Stmt         Stmt;
 non terminal Absyn.ForStmt      ForStmt; 
@@ -60,8 +62,10 @@ non terminal Absyn.ExpStmt      ExpStmt;
 non terminal Absyn.BreakStmt    BreakStmt; 
 non terminal Absyn.ContinueStmt ContinueStmt;
 non terminal Absyn.SwitchStmt   SwitchStmt;
-//Stmt assist 
 
+
+
+//Stmt assist
 non terminal List<Absyn.Stmt> StmtList;
 non terminal Absyn.CaseStmt CaseStmt;
 non terminal List<Absyn.CaseStmt> CaseList;
@@ -127,7 +131,29 @@ Exp ::= error:e
       {: RESULT = new Absyn.AssignExp(e1left, e1, "*=", e2); :}
       | Exp:e1 DIVASSIGN Exp:e2
       {: RESULT = new Absyn.AssignExp(e1left, e1, "/=", e2); :}
-      ;
+      | ID:n LPAREN ArgList:a RPAREN
+      {: RESULT = new Absyn.CallExp(nleft, sym(n), a); :}
+      |  SIZEOF LPAREN Type:t RPAREN
+      {: RESULT = new Absyn.SizeofExp($1left, t); :}
+      | SIZEOF LPAREN Exp:e RPAREN
+      {: RESULT = new Absyn.SizeofExp($1left, e); :}
+      | INCREMENT Exp:e
+      {: RESULT = new Absyn.UnaryOpExp($eleft, "++", e, true); :}  // Pre-increment: ++x
+      | DECREMENT Exp:e
+      {: RESULT = new Absyn.UnaryOpExp($eleft, "--", e, true); :}  // Pre-decrement: --x
+      | Exp:e INCREMENT
+      {: RESULT = new Absyn.UnaryOpExp($eright, "++", e, false); :} // Post-increment: x++
+      | Exp:e DECREMENT
+      {: RESULT = new Absyn.UnaryOpExp(eright, "--", e, false); :}
+            ;
+ArgList ::= Exp:e COMMA ArgList:a
+         {: RESULT = $2.add(0, e); :}
+         | Exp:e
+         {: RESULT = new ArrayList<>(Collections.singletonList(e)); :}
+         | {: RESULT = new ArrayList<>(); :}  // No arguments
+         ;
+
+
 
 //All Type 
 Type ::= INT {: RESULT = new Absyn.IntTy(tleft); :}
@@ -138,6 +164,14 @@ Type ::= INT {: RESULT = new Absyn.IntTy(tleft); :}
       | LONG Type:t {: RESULT = new Absyn.LongTy(tleft, t); :}
       | SHORT Type:t {: RESULT = new Absyn.ShortTy(tleft, t); :}
       | STRUCT ID:n LBRACE VarDecList:v RBRACE {: RESULT = new Absyn.StructTy(nleft, v); :}
+      | Type:t LBRACK DECIMAL_LITERAL:size RBRACK  
+      {: RESULT = new Absyn.ArrayTy($1left, t, size); :}
+      | Type: t LBRACK RBRACE
+      {: RESULT = new Absyn.ArrayTy($1left, t, null); :}
+      | TIMES Type:t 
+      {: RESULT = new Absyn.PointerTy($1left, t); :} 
+      | Type:t TIMES 
+      {: RESULT = new Absyn.PointerTy($2right, t); :} 
       ;
 
 
@@ -152,7 +186,29 @@ VarDec ::= StorageClass:s Type:t ID:n SEMICOLON
          {: RESULT = new Absyn.VarDec(tleft, t, sym(n), null, s.isExtern, s.isStatic); :}
          | StorageClass:s Type:t ID:n ASSIGN Exp:e SEMICOLON
          {: RESULT = new Absyn.VarDec(tleft, t, sym(n), e, s.isExtern, s.isStatic); :}
+         | StorageClass:s Type:t ID:n LBRACK DECIMAL_LITERAL:size RBRACK SEMICOLON
+         {: RESULT = new Absyn.VarDec($1left, new Absyn.ArrayTy($1left, t, size), sym(n), null, s.isExtern, s.isStatic); :}
+         | StorageClass:s Type:t ID:n LBRACK RBRACK ASSIGN Exp:e SEMICOLON
+         {: RESULT = new Absyn.VarDec($1left, new Absyn.ArrayTy($1left, t, null), sym(n), e, s.isExtern, s.isStatic); :}
          ;
+
+
+
+FunDec ::= Type:t ID:n LPAREN ParamList:p RPAREN BlockStmt:b
+        {: RESULT = new Absyn.FunDec(tleft, t, sym(n), p, b); :}
+        | Type:t ID:n LPAREN ParamList:p RPAREN SEMICOLON
+        {: RESULT = new Absyn.FunDec(tleft, t, sym(n), p, null); :} // Function prototype
+        ;
+
+ParamList ::= VarDec:v COMMA ParamList:p
+           {: RESULT = $2.add(0, v); :}
+           | VarDec:v
+           {: RESULT = new ArrayList<>(Collections.singletonList(v)); :}
+           | {: RESULT = new ArrayList<>(); :}
+           ;
+
+
+
 
 Stmt ::= BlockStm
         | IfStmt 
@@ -173,16 +229,19 @@ IfStmt ::= IF LPAREN Exp:cond RPAREN  Stmt:s1
           |  IF LPAREN Exp:cond RPAREN  Stmt:s1  ELSE  Stmt:s2 
           {: RESULT = new Absyn.IfStmt($1left, cond,s1, s2 ); :};
 
-//for(int  i = 1; i < 0 ; i++ ){statement}
-ForStmt ::= FOR LPAREN VarDec:v SEMICOLON Exp:cond SEMICOLON Exp:upD RPAREN  Stmt:s 
+//for( i = 1; i < 0 ; i++ ){statement}
+ForStmt ::= FOR LPAREN VarExp:v SEMICOLON Exp:cond SEMICOLON Exp:upD RPAREN  Stmt:s
           {: RESULT = new Absyn.ForStmt($1left, v, cond,upD,s); :}
-          | FOR LPAREN VarDec:v SEMICOLON Exp:cond SEMICOLON   Stmt:s RBRACE // for (int i = 0; i < 0 ; ){stmt}
+          | FOR LPAREN VarDec:v SEMICOLON Exp:cond SEMICOLON Exp:upD RPAREN Stmt:s //for(int  i = 1; i < 0 ; i++ ){statement}
+          {: RESULT = new Absyn.ForStmt($1left, v, cond, upD, s); :}
+          | FOR LPAREN VarExp:v SEMICOLON Exp:cond SEMICOLON   Stmt:s RBRACE // for (int i = 0; i < 0 ; ){stmt}
           {: RESULT = new Absyn.ForStmt($1left, v, cond,null,s); :}
           | FOR LPAREN  SEMICOLON  SEMICOLON RPAREN  Stmt:s   // for (; ; ){stmt}
            {: RESULT = new Absyn.ForStmt($1left, null, null,null,s); :};
 
-WhileStmt ::= WHILE LPAREN Exp:cond RPAREN Stmt:s 
-          {:RESULT = new Absyn.ForStmt($1left, cond, s); :};
+WhileStmt ::= WHILE LPAREN Exp:cond RPAREN Stmt:s
+          {: RESULT = new Absyn.WhileStmt($1left, cond, s); :};
+
        
 ReturnStmt ::= RETURN Exp:e SEMICOLON
             {: RESULT = new Absyn.ReturnStmt($1left, e); :}
