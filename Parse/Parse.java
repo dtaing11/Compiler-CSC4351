@@ -1,5 +1,7 @@
 package Parse;
 
+import ErrorMsg.ErrorMsg;
+
 public class Parse {
 
   public ErrorMsg errorMsg;
