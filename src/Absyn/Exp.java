@@ -1,2 +1,4 @@
 package Absyn;
-abstract public class Exp extends Absyn {}
+
+public abstract class Exp extends Absyn  {
+}

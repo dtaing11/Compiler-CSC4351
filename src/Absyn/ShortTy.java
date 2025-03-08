@@ -1,4 +1,5 @@
-package  Absyn;
+package Absyn;
+
 public class ShortTy extends Ty {
-    public ShortTy (int p) {pos = p; }
+   public ShortTy(int pos) {this.pos = pos; }
 }

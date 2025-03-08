@@ -1,4 +1,4 @@
 package Absyn;
-public class Ty extends Absyn {
-    
+
+public abstract class Ty extends Absyn {
 }
